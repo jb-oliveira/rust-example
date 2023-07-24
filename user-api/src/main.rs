@@ -1,7 +1,5 @@
-use axum::{
-    routing::get,
-    Router,
-};
+use axum::{routing::get, Router, Json};
+use serde_json::{json, Value};
 
 #[tokio::main]
 async fn main() {
@@ -19,6 +17,11 @@ async fn main() {
 }
 
 async fn root() {}
-async fn get_foo() {}
+
+async fn get_foo() -> &'static str { "foo" }
+
 async fn post_foo() {}
-async fn foo_bar() {}
+
+async fn foo_bar() -> Json<Value> {
+    Json(json!({ "data": 42 }))
+}
