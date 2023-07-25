@@ -5,9 +5,9 @@ use serde_json::{json, Value};
 async fn main() {
     // build our application with a single route
     // let app = create_route();
-    let app = Router::new();
-    app.route("/", get(root));
-    create_routes(&app);
+    let app = Router::new()
+        .route("/", get(root))
+        .nest("/foo", create_routes());
     // run it with hyper on localhost:3000
     axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
         .serve(app.into_make_service())
@@ -15,11 +15,10 @@ async fn main() {
         .unwrap();
 }
 
-fn create_routes(router: &Router) -> Router {
-    let inner = Router::new()
-        .route("/foo", get(get_foo).post(post_foo))
-        .route("/foo/bar", get(foo_bar));
-    router.nest("/",inner)
+fn create_routes() -> Router {
+    Router::new()
+        .route("/", get(get_foo).post(post_foo))
+        .route("/bar", get(foo_bar))
 }
 
 async fn root() {}
