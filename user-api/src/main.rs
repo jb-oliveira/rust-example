@@ -4,8 +4,10 @@ use serde_json::{json, Value};
 #[tokio::main]
 async fn main() {
     // build our application with a single route
-    let app = create_route();
-
+    // let app = create_route();
+    let app = Router::new();
+    app.route("/", get(root));
+    create_routes(&app);
     // run it with hyper on localhost:3000
     axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
         .serve(app.into_make_service())
@@ -13,11 +15,11 @@ async fn main() {
         .unwrap();
 }
 
-fn create_route() -> Router {
-    Router::new()
-        .route("/", get(root))
+fn create_routes(router: &Router) -> Router {
+    let inner = Router::new()
         .route("/foo", get(get_foo).post(post_foo))
-        .route("/foo/bar", get(foo_bar))
+        .route("/foo/bar", get(foo_bar));
+    router.nest("/",inner)
 }
 
 async fn root() {}
