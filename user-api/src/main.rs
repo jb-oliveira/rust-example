@@ -7,7 +7,8 @@ async fn main() {
     // let app = create_route();
     let app = Router::new()
         .route("/", get(root))
-        .nest("/foo", create_routes());
+        .nest("/foo", create_routes())
+        .nest("/foo2", create_routes());
     // run it with hyper on localhost:3000
     axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
         .serve(app.into_make_service())
