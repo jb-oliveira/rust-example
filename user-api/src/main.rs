@@ -1,33 +1,37 @@
-use axum::{routing::get, Router, Json};
-use serde_json::{json, Value};
+use std::sync::Mutex;
 
-#[tokio::main]
-async fn main() {
-    // build our application with a single route
-    // let app = create_route();
-    let app = Router::new()
-        .route("/", get(root))
-        .nest("/foo", create_routes())
-        .nest("/foo2", create_routes());
-    // run it with hyper on localhost:3000
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
-        .serve(app.into_make_service())
+use actix_web::{get,App, HttpServer, web};
+use serde::{Deserialize, Serialize};
+
+struct AppState {
+    todo_list: Mutex<Vec<Todo>>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct Todo {
+    id: i32,
+    date: i64,
+    title: String,
+}
+
+#[get("/")]
+async fn index() -> String {
+    "Hello world".to_string()
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    let app_data = web::Data::new(AppState {
+        todo_list: Mutex::new(vec![])
+    });
+
+    HttpServer::new(move || {
+        App::new()
+            .app_data(app_data.clone())
+            .service(index)
+    })
+        .bind(("localhost", 8080))?
+        .run()
         .await
-        .unwrap();
 }
 
-fn create_routes() -> Router {
-    Router::new()
-        .route("/", get(get_foo).post(post_foo))
-        .route("/bar", get(foo_bar))
-}
-
-async fn root() {}
-
-async fn get_foo() -> &'static str { "foo" }
-
-async fn post_foo() {}
-
-async fn foo_bar() -> Json<Value> {
-    Json(json!({ "data": 42 }))
-}
