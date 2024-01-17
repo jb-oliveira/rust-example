@@ -3,6 +3,7 @@ use postgres::Error as PostgresError;
 use std::net::{TcpListener, TcpStream};
 use std::io::{Read, Write};
 use std::env;
+use std::fmt::format;
 
 #[macro_use]
 extern crate serde_derive;
@@ -24,7 +25,8 @@ fn main() {
         println!("Error {}", e);
         return;
     }
-    
+    let listener =TcpListener::bind(format!(0.0.0.0:8080)).unwrap();
+    println!("Server started!");
 }
 
 fn set_database() -> Result<(), PostgresError> {
