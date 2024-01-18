@@ -5,4 +5,5 @@ Basic CRUD example in Rust using no frameworks.
 just run:
 
 docker compose build
+
 docker compose up
