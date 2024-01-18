@@ -1,9 +1,10 @@
-use postgres::{Client, NoTls};
+use postgres::{Client, Error, NoTls};
 use postgres::Error as PostgresError;
 use std::net::{TcpListener, TcpStream};
 use std::io::{Read, Write};
 use std::env;
 use std::fmt::format;
+use serde_json::Error;
 use serde_json::Value::String;
 
 #[macro_use]
@@ -63,6 +64,18 @@ fn handle_client(mut stream: TcpStream) {
         }
     }
 }
+
+fn handle_post_request(request: &str) -> (String, String) {
+    match (get_user_request_body(&request), Client::connect(DB_URL, NoTls)) {
+        (Ok(user), Ok(mut client)) => {
+            client.execute("insert into users (name,email) values($1,$2)",
+                           &[user.name, user.email]).unwrap();
+            (OK_REPONSE.to_string(), "User created".to_string())
+        }
+        _ => (INTERNAL_SERVER_ERROR.to_string(), "Error".to_string())
+    }
+}
+
 
 fn set_database() -> Result<(), PostgresError> {
     let mut client = Client::connect(DB_URL, NoTls);
