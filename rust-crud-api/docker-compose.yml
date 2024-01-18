@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   rustapp:
-    container_name: rustapp
+    container_name: rust-crud
     image: joao/rust-crud:1.0.0
     build:
       context: .
