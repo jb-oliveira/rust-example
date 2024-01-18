@@ -1,2 +1,2 @@
-# rust-ecommerce
-Basic example in Rust
+# rust-crud
+Basic Crud example in Rust using no frameworks.
