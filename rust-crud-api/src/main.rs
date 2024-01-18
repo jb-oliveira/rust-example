@@ -1,9 +1,10 @@
-use postgres::{Client, Error, NoTls};
+use postgres::{Client,  NoTls};
 use postgres::Error as PostgresError;
 use std::net::{TcpListener, TcpStream};
 use std::io::{Read, Write};
 use std::env;
 use std::fmt::format;
+use std::process::id;
 use serde_json::Error;
 use serde_json::Value::String;
 
@@ -27,7 +28,7 @@ fn main() {
         println!("Error {}", e);
         return;
     }
-    let listener = TcpListener::bind(format!(0.0.0.0:8080)).unwrap();
+    let listener = TcpListener::bind(format!("0.0.0.0:8080")).unwrap();
     println!("Server started!");
 
     for stream in listener.incoming() {
@@ -60,7 +61,7 @@ fn handle_client(mut stream: TcpStream) {
             stream.write_all(format!("{}{}", status_line, content).as_bytes()).unwrap();
         }
         Err(e) => {
-            println!("Error {]}", e);
+            println!("Error {}", e);
         }
     }
 }
@@ -71,6 +72,27 @@ fn handle_post_request(request: &str) -> (String, String) {
             client.execute("insert into users (name,email) values($1,$2)",
                            &[user.name, user.email]).unwrap();
             (OK_REPONSE.to_string(), "User created".to_string())
+        }
+        _ => (INTERNAL_SERVER_ERROR.to_string(), "Error".to_string())
+    }
+}
+
+fn handle_get_request(request: &str) -> (String, String) {
+    match (get_id(&request), Client::connect(DB_URL, NoTls)) {
+        (Ok(id), Ok(mut client)) => {
+            match client.query("select * from users where id = $1",
+                               &[&id])
+            {
+                Ok(row) => {
+                    let user = User {
+                        id: row.get(0),
+                        name: row.get(1),
+                        email: row.get(2)
+                    };
+                    (OK_REPONSE.to_string(), serde_json::to_string(&user).unwrap())
+                }
+                _ => (NOT_FOUND.to_string(), "User created".to_string())
+            }
         }
         _ => (INTERNAL_SERVER_ERROR.to_string(), "Error".to_string())
     }
