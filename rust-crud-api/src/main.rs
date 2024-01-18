@@ -18,7 +18,7 @@ struct User {
     email: String,
 }
 
-const DB_URL: &str = !env("DB_URL");
+const DB_URL: &str = env!("DATABASE_URL");
 const OK_REPONSE: &str = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n";
 const NOT_FOUND: &str = "HTTP/1.1 404 NOT FOUND\r\n\r\n";
 const INTERNAL_SERVER_ERROR: &str = "HTTP/1.1 500 INTERNAL SERVER ERROR\r\n\r\n";
@@ -53,7 +53,7 @@ fn handle_client(mut stream: TcpStream) {
             let (status_line, content) = match &request {
                 r if request_with("POST /users") => handle_post_request(r),
                 r if request_with("GET /users/") => handle_get_request(r),
-                r if request_with("GET /users") => handle_get_all_request(r),
+                r if request_with("GET /users") => handle_get_all_request(),
                 r if request_with("PUT /users/") => handle_put_request(r),
                 r if request_with("DELETE /users/") => handle_delete_request(r),
                 _ => (NOT_FOUND, "Not found".to_string())
@@ -107,6 +107,26 @@ fn set_database() -> Result<(), PostgresError> {
         email VARCHAR NOT NULL\
     ", &[])?
 }
+
+fn handle_get_all_request() -> (String, String) {
+    match Client::connect(DB_URL, NoTls) {
+        Ok(mut client) => {
+            let mut users = Vec::new();
+
+            for row in client.query("SELECT * FROM users", &[]).unwrap() {
+                users.push(User {
+                    id: row.get(0),
+                    name: row.get(1),
+                    email: row.get(2),
+                });
+            }
+
+            (OK_REPONSE.to_string(), serde_json::to_string(&users).unwrap())
+        }
+        _ => (INTERNAL_SERVER_ERROR.to_string(), "Error".to_string()),
+    }
+}
+
 
 fn get_id(request: &str) -> &str {
     request.split("/").nth(2).unwrap_or_default().split_ascii_whitespace().next().unwrap_or_default()
