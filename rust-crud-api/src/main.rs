@@ -51,11 +51,11 @@ fn handle_client(mut stream: TcpStream) {
         Ok(size) => {
             request.push_str(String::from_utf8_lossy(&buffer[..size]).as_ref());
             let (status_line, content) = match &request {
-                r if request_with("POST /users") => handle_post_request(r),
-                r if request_with("GET /users/") => handle_get_request(r),
-                r if request_with("GET /users") => handle_get_all_request(),
-                r if request_with("PUT /users/") => handle_put_request(r),
-                r if request_with("DELETE /users/") => handle_delete_request(r),
+                r if r.starts_with("POST /users") => handle_post_request(r),
+                r if r.starts_with("GET /users/") => handle_get_request(r),
+                r if r.starts_with("GET /users") => handle_get_all_request(),
+                r if r.starts_with("PUT /users/") => handle_put_request(r),
+                r if r.starts_with("DELETE /users/") => handle_delete_request(r),
                 _ => (NOT_FOUND, "Not found".to_string())
             };
             stream.write_all(format!("{}{}", status_line, content).as_bytes()).unwrap();
